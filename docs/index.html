@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f4f8fc">
+  <title>Empiric antibiotic criteria</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400;1,700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div id="lock" class="lock">
+    <img class="brand brand-lg" src="shea-logo.png" alt="SHEA, The Society for Healthcare Epidemiology of America">
+    <h1 class="home-title">Empiric antibiotic criteria</h1>
+    <p class="lede">Enter the password to continue.</p>
+    <form id="lock-form" class="lock-form">
+      <label for="password">Password</label>
+      <input id="password" name="password" type="password" autocomplete="current-password" required>
+      <p id="lock-error" class="lock-error" role="alert"></p>
+      <button class="submit-button" type="submit">Continue</button>
+    </form>
+  </div>
+
+  <div id="workspace" hidden>
+    <main id="app"></main>
+    <div id="table-dialog" class="dialog" role="dialog" aria-modal="true" aria-labelledby="table-title" hidden>
+      <div class="dialog-card">
+        <div class="dialog-head">
+          <h2 id="table-title">Supplementary Material, Table 2</h2>
+          <button id="table-close" class="dialog-close" type="button">Close</button>
+        </div>
+        <p id="table-2">Fever and delirium definitions are not linked yet. This placeholder will open Table 2 when the address is available.</p>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      var iterations = 150000;
+      var storageKey = "shea-criteria-session";
+      var form = document.getElementById("lock-form");
+      var input = document.getElementById("password");
+      var error = document.getElementById("lock-error");
+
+      function bytesFromBase64(value) {
+        var binary = atob(value.trim());
+        var bytes = new Uint8Array(binary.length);
+        for (var i = 0; i < binary.length; i += 1) bytes[i] = binary.charCodeAt(i);
+        return bytes;
+      }
+
+      function runScript(source) {
+        var script = document.createElement("script");
+        script.textContent = source;
+        document.body.appendChild(script);
+      }
+
+      async function unlock(password) {
+        var response = await fetch("bundle.enc", { cache: "no-store" });
+        if (!response.ok) throw new Error("missing");
+        var raw = bytesFromBase64(await response.text());
+        var keyMaterial = await crypto.subtle.importKey(
+          "raw",
+          new TextEncoder().encode(password),
+          "PBKDF2",
+          false,
+          ["deriveKey"]
+        );
+        var key = await crypto.subtle.deriveKey(
+          { name: "PBKDF2", salt: raw.slice(0, 16), iterations: iterations, hash: "SHA-256" },
+          keyMaterial,
+          { name: "AES-GCM", length: 256 },
+          false,
+          ["decrypt"]
+        );
+        var plain = await crypto.subtle.decrypt(
+          { name: "AES-GCM", iv: raw.slice(16, 28) },
+          key,
+          raw.slice(28)
+        );
+        var packed = JSON.parse(new TextDecoder().decode(plain));
+        sessionStorage.setItem(storageKey, password);
+        document.getElementById("lock").hidden = true;
+        document.getElementById("workspace").hidden = false;
+        runScript(packed.criteria);
+        runScript(packed.app);
+      }
+
+      form.addEventListener("submit", function (event) {
+        event.preventDefault();
+        error.textContent = "";
+        input.removeAttribute("aria-invalid");
+        unlock(input.value).catch(function () {
+          sessionStorage.removeItem(storageKey);
+          error.textContent = "That password is not correct.";
+          input.setAttribute("aria-invalid", "true");
+          input.focus();
+        });
+      });
+
+      var saved = sessionStorage.getItem(storageKey);
+      if (saved) {
+        unlock(saved).catch(function () {
+          sessionStorage.removeItem(storageKey);
+        });
+      } else {
+        input.focus();
+      }
+    })();
+  </script>
+</body>
+</html>

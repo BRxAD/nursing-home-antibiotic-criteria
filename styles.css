@@ -137,6 +137,11 @@ button { cursor: pointer; }
   gap: 0.75rem;
 }
 
+.applies {
+  margin: 0.45rem 0 0;
+  color: var(--ink);
+}
+
 .mast-title {
   margin: 0.35rem 0 0;
   font-size: clamp(1.7rem, 6vw, 2.3rem);
@@ -276,11 +281,6 @@ button { cursor: pointer; }
 .hint { color: var(--muted); font-size: 0.92rem; font-weight: 400; }
 
 .check.is-on {
-  background: #e8f3ff;
-  border-color: var(--accent);
-}
-
-.check.gate.is-on {
   background: #e8f3ff;
   border-color: var(--accent);
 }

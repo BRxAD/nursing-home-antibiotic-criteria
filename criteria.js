@@ -429,15 +429,9 @@ var AntibioticCriteria = (function () {
       conditionId: "cdi",
       name: "C. difficile",
       summaryName: "C. difficile infection",
-      rule: "Use these criteria only when the C. difficile test result is not expected within 24 hours. Minimum criteria are all of the sections below. The last section can be met either way.",
+      applies: "Use these criteria only when CDI test results are not expected to be available within 24 hours.",
       interpretation: cdiInterpretation,
       support: cdiSupport,
-      gate: {
-        id: "cdi-gate",
-        label: "The C. difficile test result is not expected within 24 hours",
-        short: "Confirm that the test result is not expected within 24 hours.",
-        unmet: "These criteria apply only when the test result is not expected within 24 hours. In a clinically stable resident, await the result before starting therapy."
-      },
       logic: {
         op: "and",
         groups: [
@@ -531,20 +525,11 @@ var AntibioticCriteria = (function () {
     node.items.forEach(fn);
   }
 
-  function evaluate(pathway, selected, gateOn) {
+  function evaluate(pathway, selected) {
     var selectedLabels = [];
     eachItem(pathway.logic, function (entry) {
       if (selected[entry.id]) selectedLabels.push(entry.label);
     });
-    if (pathway.gate && !gateOn) {
-      return {
-        met: false,
-        blockedByGate: true,
-        gaps: [pathway.gate.unmet],
-        summary: pathway.gate.short,
-        selectedLabels: selectedLabels
-      };
-    }
     var result = evalNode(pathway.logic, selected);
     return {
       met: result.met,

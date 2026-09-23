@@ -4,7 +4,6 @@
     conditionId: null,
     pathwayId: null,
     selected: {},
-    gateOn: false,
     infoOpen: false,
     tableOpen: false,
     submitted: false
@@ -25,37 +24,47 @@
   }
 
   function resultFor(current) {
-    return data.evaluate(current, state.selected, state.gateOn);
+    return data.evaluate(current, state.selected);
   }
 
   function el(tag, className, text) {
     var node = document.createElement(tag);
     if (className) node.className = className;
-    if (text != null) node.textContent = text;
+    if (text != null) appendRich(node, text);
     return node;
+  }
+
+  function appendRich(parent, text) {
+    var pattern = /C\. difficile|\b(?:Fever|Delirium|delirium)\b/g;
+    var last = 0;
+    var match;
+    while ((match = pattern.exec(text))) {
+      if (match.index > last) parent.appendChild(document.createTextNode(text.slice(last, match.index)));
+      if (match[0] === "C. difficile") {
+        var em = document.createElement("em");
+        em.textContent = "C. difficile";
+        parent.appendChild(em);
+      } else {
+        var link = document.createElement("a");
+        link.href = "#table-2";
+        link.className = "table-link";
+        link.textContent = match[0];
+        link.title = "Supplementary Material, Table 2";
+        link.addEventListener("click", function (event) {
+          event.preventDefault();
+          event.stopPropagation();
+          openTable();
+        });
+        parent.appendChild(link);
+      }
+      last = match.index + match[0].length;
+    }
+    if (last < text.length) parent.appendChild(document.createTextNode(text.slice(last)));
   }
 
   function linkLabel(label) {
     var fragment = document.createDocumentFragment();
-    var pattern = /\b(Fever|Delirium|delirium)\b/g;
-    var last = 0;
-    var match;
-    while ((match = pattern.exec(label))) {
-      if (match.index > last) fragment.appendChild(document.createTextNode(label.slice(last, match.index)));
-      var link = document.createElement("a");
-      link.href = "#table-2";
-      link.className = "table-link";
-      link.textContent = match[1];
-      link.title = "Supplementary Material, Table 2";
-      link.addEventListener("click", function (event) {
-        event.preventDefault();
-        event.stopPropagation();
-        openTable();
-      });
-      fragment.appendChild(link);
-      last = match.index + match[0].length;
-    }
-    if (last < label.length) fragment.appendChild(document.createTextNode(label.slice(last)));
+    appendRich(fragment, label);
     return fragment;
   }
 
@@ -142,10 +151,6 @@
 
     var sheet = el("div", "sheet");
     if (current.notice) sheet.appendChild(el("p", "notice", current.notice));
-
-    if (current.gate) {
-      sheet.appendChild(gateControl(current));
-    }
 
     walkGroups(current.logic, function (group) {
       sheet.appendChild(groupSection(group));
@@ -239,27 +244,6 @@
     return label;
   }
 
-  function gateControl(current) {
-    var label = document.createElement("label");
-    label.className = "check gate" + (state.gateOn ? " is-on" : "");
-    var input = document.createElement("input");
-    input.type = "checkbox";
-    input.checked = state.gateOn;
-    input.addEventListener("change", function () {
-      state.gateOn = input.checked;
-      label.classList.toggle("is-on", input.checked);
-      state.submitted = false;
-      clearResult();
-    });
-    var copy = el("span", "check-copy");
-    copy.appendChild(el("span", "check-label", current.gate.label));
-    copy.appendChild(el("span", "hint", "Leave this unchecked when the result is expected within 24 hours. Await the result if the resident is clinically stable."));
-    label.append(input, copy);
-    var section = el("section", "group");
-    section.appendChild(label);
-    return section;
-  }
-
   function clearResult() {
     var detail = document.getElementById("detail");
     if (detail) detail.replaceChildren();
@@ -312,6 +296,7 @@
     if (current) row.appendChild(infoButton(current));
     var heading = el("h1", "mast-title", title);
     bar.append(brand(false), row, heading);
+    if (current && current.applies) bar.appendChild(el("p", "applies", current.applies));
     return bar;
   }
 
@@ -400,7 +385,6 @@
 
   function clearFindings() {
     state.selected = {};
-    state.gateOn = false;
     state.submitted = false;
   }
 

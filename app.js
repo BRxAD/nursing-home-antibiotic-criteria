@@ -75,7 +75,7 @@
 
   function renderHome() {
     var header = el("header", "home-head");
-    header.appendChild(el("p", "eyebrow", "Nursing home"));
+    header.appendChild(brand(true));
     header.appendChild(el("h1", "home-title", "Empiric antibiotic criteria"));
     header.appendChild(el("p", "lede", "Select the suspected infection. Check the findings that are present, then submit."));
     app.appendChild(header);
@@ -311,8 +311,16 @@
     row.appendChild(back);
     if (current) row.appendChild(infoButton(current));
     var heading = el("h1", "mast-title", title);
-    bar.append(row, heading);
+    bar.append(brand(false), row, heading);
     return bar;
+  }
+
+  function brand(large) {
+    var img = document.createElement("img");
+    img.src = "shea-logo.png";
+    img.alt = "SHEA, The Society for Healthcare Epidemiology of America";
+    img.className = large ? "brand brand-lg" : "brand";
+    return img;
   }
 
   function infoButton(current) {

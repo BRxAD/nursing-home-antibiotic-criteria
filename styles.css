@@ -49,6 +49,10 @@ button { cursor: pointer; }
   align-content: center;
 }
 
+.lock[hidden] {
+  display: none;
+}
+
 .lock-form {
   display: grid;
   gap: 0.65rem;

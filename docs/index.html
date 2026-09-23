@@ -82,7 +82,7 @@
         );
         var packed = JSON.parse(new TextDecoder().decode(plain));
         sessionStorage.setItem(storageKey, password);
-        document.getElementById("lock").hidden = true;
+        document.getElementById("lock").remove();
         document.getElementById("workspace").hidden = false;
         runScript(packed.criteria);
         runScript(packed.app);

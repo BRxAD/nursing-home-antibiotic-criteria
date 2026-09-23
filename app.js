@@ -85,7 +85,7 @@
   function renderHome() {
     var header = el("header", "home-head");
     header.appendChild(brand(true));
-    header.appendChild(el("h1", "home-title", "Empiric antibiotic criteria"));
+    header.appendChild(el("h1", "home-title", "Antibiotic Initiation Criteria"));
     header.appendChild(el("p", "lede", "Select the suspected infection. Check the findings that are present, then submit."));
     app.appendChild(header);
 
